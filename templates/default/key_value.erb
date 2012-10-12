@@ -1,0 +1,5 @@
+<% @data.reject{ |k, v| [false,nil].include?(v) }.each_pair do |key, value| %>
+<% Array(value).each do |v_element| %>
+<%= key %> <%= v_element unless v_element == true %>
+<% end %>
+<% end %>

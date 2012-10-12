@@ -1,0 +1,28 @@
+#!/bin/bash
+set -e
+
+config_dir="${1:-/etc/haproxy}"
+config="${2:-/etc/haproxy/haproxy.cfg}"
+
+cat > "${config}" <<-EOF
+# Configuration file for HAProxy
+#
+# This file is generated. All changes will be overwritten!
+# Generated on $(date)
+EOF
+
+for file in "${config_dir}/global.cfg" "${config_dir}/defaults.cfg"; do
+  if [[ -f "$file" ]]; then
+    echo -e "\n$(basename "${file%.cfg}")" >> "$config"
+    sed 's/^/    /' "$file" >> "$config"
+  fi
+done
+
+for obj_type in listen frontend backend; do
+  for file in "${config_dir}/${obj_type}.d/"*.cfg; do
+    if [[ -f "$file" ]]; then
+      echo -e "\n# ${file}\n${obj_type} $(basename "${file%.cfg}")" >> "$config"
+      sed 's/^/    /' "$file" >> "$config"
+    fi
+  done
+done

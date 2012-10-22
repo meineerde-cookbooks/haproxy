@@ -11,16 +11,25 @@ remote_file source_path do
   backup false
 end
 
+# Default flags from Debian Wheezy
+config_flags = ["no-idea", "no-mdc2", "no-rc5", "zlib", "enable-tlsext", "no-ssl2"]
+case node['kernel']['machine']
+when "i586", "i686"
+  config_flags << "i586" << "i686/cmov"
+end
+config_flags += node['haproxy']['source']['openssl_config_flags']
+
+# We set the target by ourself and don't want anyone messing with us.
+config_flags.delete_if {|flag| flag =~ /^\s*--(prefix|openssldir)=/ }
+config_flags += ["--openssldir=#{node['haproxy']['source']['dir']}/openssl"]
+
 # Unpack the sources and compile them
 # Then install the result to /opt/haproxy/openssl.
-
-config_flags = node['haproxy']['source']['openssl_config_flags']
-config_flags += ["--openssldir=#{node['haproxy']['source']['dir']}/openssl"]
-config_flags.delete_if {|flag| flag =~ /^\s--(prefix|openssldir)=/ }
-
 bash "Compile OpenSSL #{version}" do
   cwd node['haproxy']['source']['dir']
   code <<-EOF
+    set -e
+
     tar -xzf #{Shellwords.escape(source_path)} -C #{Shellwords.escape(node['haproxy']['source']['dir'])}
     cd openssl-#{version}
     make clean

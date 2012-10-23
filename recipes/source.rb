@@ -115,12 +115,13 @@ when /sparc/
 end
 
 haproxy_flags += node['haproxy']['source']['flags']
-haproxy_flags << "DEFINE=#{node['haproxy']['source']['define_flags'].join("")}"
-haproxy_flags << "SILENT_DEFINE=#{node['haproxy']['source']['silent_define_flags'].join("")}"
+haproxy_flags << "DEFINE=#{node['haproxy']['source']['define_flags'].join(" ")}"
+haproxy_flags << "SILENT_DEFINE=#{node['haproxy']['source']['silent_define_flags'].join(" ")}"
 haproxy_flags << "ADDLIB=#{add_lib.join(" ")}"
 haproxy_flags << "ADDINC=#{add_inc.join(" ")}"
 
 # FIXME: This doesn't recompile if only the flags change
+Chef::Log.debug("Compiling HAProxy as make #{haproxy_flags.collect {|f| Shellwords.escape(f)}.join(" ")}")
 bash "compile haproxy #{version}" do
   cwd node['haproxy']['source']['dir']
   code <<-EOF

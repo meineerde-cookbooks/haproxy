@@ -30,6 +30,7 @@ if node['haproxy']['source']['flags'].include?("USE_OPENSSL=1")
 
     add_inc << "-I#{node['haproxy']['source']['dir']}/openssl/include"
     add_lib << "-L#{node['haproxy']['source']['dir']}/openssl/lib"
+    add_lib << "-lz" << "-ldl" # required on my Debian Wheezy test box
   else
     package value_for_platform(
       %w[debian ubuntu] => {"default" => "libssl-dev"},

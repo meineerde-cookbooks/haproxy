@@ -23,9 +23,12 @@ config_flags += node['haproxy']['source']['openssl_config_flags']
 config_flags.delete_if {|flag| flag =~ /^\s*--(prefix|openssldir)=/ }
 config_flags += ["--openssldir=#{node['haproxy']['source']['dir']}/openssl"]
 
+config_flags_for_shell = config_flags.collect {|f| Shellwords.escape(f)}.join(" ")
+
 # Unpack the sources and compile them
 # Then install the result to /opt/haproxy/openssl.
-bash "Compile OpenSSL #{version}" do
+Chef::Log.debug("Compiling OpenSSL #{version} as: make #{config_flags_for_shell}")
+openssl_compile = bash "Compile OpenSSL #{version}" do
   cwd node['haproxy']['source']['dir']
   code <<-EOF
     set -e
@@ -33,7 +36,7 @@ bash "Compile OpenSSL #{version}" do
     tar -xzf #{Shellwords.escape(source_path)} -C #{Shellwords.escape(node['haproxy']['source']['dir'])}
     cd openssl-#{version}
     make clean
-    ./config #{config_flags.collect {|f| Shellwords.escape(f)}.join(" ")}
+    ./config #{config_flags_for_shell}
     make
 
     # Install OpenSSL
@@ -41,6 +44,16 @@ bash "Compile OpenSSL #{version}" do
     make test
     make install
   EOF
-
-  creates "#{node['haproxy']['source']['dir']}/openssl-#{version}/libssl.a"
+end
+if Chef::Config[:solo] || node['haproxy']['source']['openssl_compiled_config_flags'] == config_flags_for_shell
+  # The flags haven't changed from the last compile attempt
+  # Thus, if the compilation succeeded last time, we can skip it now
+  openssl_compile.not_if do
+   File.exists?("#{node['haproxy']['source']['dir']}/openssl-#{version}/libssl.a") &&
+   File.exists?("#{node['haproxy']['source']['dir']}/openssl/libssl.a")
+ end
+else
+  # Flags have changed. Thus we need to perform a full clean compile run
+  # We also remember the flags for next time
+  node.set['haproxy']['source']['openssl_compiled_config_flags'] = config_flags_for_shell
 end

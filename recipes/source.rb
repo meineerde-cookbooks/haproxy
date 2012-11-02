@@ -120,17 +120,26 @@ haproxy_flags << "SILENT_DEFINE=#{node['haproxy']['source']['silent_define_flags
 haproxy_flags << "ADDLIB=#{add_lib.join(" ")}"
 haproxy_flags << "ADDINC=#{add_inc.join(" ")}"
 
-# FIXME: This doesn't recompile if only the flags change
-Chef::Log.debug("Compiling HAProxy as make #{haproxy_flags.collect {|f| Shellwords.escape(f)}.join(" ")}")
-bash "compile haproxy #{version}" do
+haproxy_flags_for_shell = haproxy_flags.collect {|f| Shellwords.escape(f)}.join(" ")
+
+Chef::Log.debug("Compiling HAProxy #{version} as: make #{haproxy_flags_for_shell}")
+haproxy_compile = bash "compile haproxy #{version}" do
   cwd node['haproxy']['source']['dir']
   code <<-EOF
     tar -xzf #{Shellwords.escape(source_path)} -C #{Shellwords.escape(node['haproxy']['source']['dir'])}
     cd haproxy-#{version}
     make clean
-    make #{haproxy_flags.collect {|f| Shellwords.escape(f)}.join(" ")}
+    make #{haproxy_flags_for_shell}
   EOF
-  creates "#{node['haproxy']['source']['dir']}/haproxy-#{version}/haproxy"
+end
+if Chef::Config[:solo] || node['haproxy']['source']['compiled_flags'] == haproxy_flags_for_shell
+  # The flags haven't changed from the last compile attempt
+  # Thus, if the compilation succeeded last time, we can skip it now
+  haproxy_compile.creates "#{node['haproxy']['source']['dir']}/haproxy-#{version}/haproxy"
+else
+  # Flags have changed. Thus we need to perform a full clean compile run
+  # We also remember the flags for next time
+  node.set['haproxy']['source']['compiled_flags'] = haproxy_flags_for_shell
 end
 
 group "haproxy" do

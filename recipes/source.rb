@@ -141,9 +141,9 @@ if node['haproxy']['source']['flags'].include?("USE_OPENSSL=1")
     # required on my Debian Wheezy test box
     add_lib << "-lz" << "-ldl"
   else
-    package value_for_platform(
-      %w[debian ubuntu] => {"default" => "libssl-dev"},
-      %w[redhat centos fedora suse] => {"default" => "openssl-devel"},
+    package value_for_platform_family(
+      %w[debian] => {"default" => "libssl-dev"},
+      %w[rhel fedora suse] => {"default" => "openssl-devel"},
       "default" => "libssl-dev"
     )
   end

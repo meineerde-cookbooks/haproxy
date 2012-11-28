@@ -149,6 +149,15 @@ if node['haproxy']['source']['flags'].include?("USE_OPENSSL=1")
   end
 end
 
+if (node['haproxy']['source']['flags'] & %w[USE_ZLIB=1 USE_OPENSSL=1]).any?
+  # Make sure we have the proper zlib headers available
+  package value_for_platform(
+    %w[debian] => {"default" => "zlib1g-dev"},
+    %w[rhel fedora suse] => {"default" => "zlib-devel"},
+    "default" => "zlib1g-dev"
+  )
+end
+
 haproxy_flags += node['haproxy']['source']['flags']
 haproxy_flags << "PCREDIR=#{pcre_dir}"
 haproxy_flags << "DEFINE=#{node['haproxy']['source']['define_flags'].join(" ")}"

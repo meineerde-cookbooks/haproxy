@@ -14,30 +14,11 @@ value_for_platform(
   package pkg
 end
 
-add_inc = []
-add_lib = []
-
 directory node['haproxy']['source']['dir'] do
   owner "root"
   group "root"
   mode "0755"
   recursive true
-end
-
-if node['haproxy']['source']['flags'].include?("USE_OPENSSL=1")
-  if node['haproxy']['source']['openssl_version']
-    include_recipe "haproxy::openssl"
-
-    add_inc << "-I#{node['haproxy']['source']['dir']}/openssl/include"
-    add_lib << "-L#{node['haproxy']['source']['dir']}/openssl/lib"
-    add_lib << "-lz" << "-ldl" # required on my Debian Wheezy test box
-  else
-    package value_for_platform(
-      %w[debian ubuntu] => {"default" => "libssl-dev"},
-      %w[redhat centos fedora suse] => {"default" => "openssl-devel"},
-      "default" => "libssl-dev"
-    )
-  end
 end
 
 version = node['haproxy']['source']['version']
@@ -114,32 +95,78 @@ when /sparc/
   haproxy_flags << "CPU=ultrasparc"
 end
 
+add_inc = []
+add_lib = []
+silent_define = []
+
+# retrieve and remove the PCREDIR flag (if set)
+# We need it later for OpenSSL. The flag is added again manually.
+if haproxy_flags.include?("USE_PCRE=1") || haproxy_flags.include?("USE_STATIC_PCRE=1")
+  pcre_dirs = haproxy_flags.select{ |flag| flag.start_with?("PCREDIR=") }
+  haproxy_flags = haproxy_flags - pcre_dirs
+
+  if pcre_dirs.any?
+    pcre_dir = pcre_dirs.last.sub(/^PCREDIR=/, '')
+  else
+    # This is how HAProxy's Makefile searches for the PCRE path
+    pcre_config = Chef::ShellOut.new("pcre-config --prefix")
+    pcre_config.run_command
+    pcre_dir = pcre_config.stdout.strip
+    pcre_dir = nil if pcre_dir == ""
+  end
+end
+
+if node['haproxy']['source']['flags'].include?("USE_OPENSSL=1")
+  if node['haproxy']['source']['openssl_version']
+    include_recipe "haproxy::openssl"
+
+    # Normally we would add the include and lib paths into ADDLIB and ADDINC
+    # but as PCRE typically lives in /usr and the PCRE definitions are added
+    # before the custom definitions, we have to be a bit hacky here.
+    # We have to make sure, that the custom OpenSSL paths are inserted before
+    # any system paths to make sure that gcc always uses our own OpenSSL.
+    #
+    # The include path is added in SILENT_DEFINE to make sure it is
+    # included rather early. As DEFINE and SILENT_DEFINE are not passed to the
+    # linker, we have to perform the little trick: if PCRE is used, we "hack"
+    # the PCREDIR override to also include the OpenSSL lib path before the
+    # PCRE lib path.
+
+    silent_define << "-I#{node['haproxy']['source']['dir']}/openssl/include"
+    if pcre_dir
+      pcre_dir = "#{node['haproxy']['source']['dir']}/openssl/lib -L#{pcre_dir}"
+    else
+      add_lib << "-L#{node['haproxy']['source']['dir']}/openssl/lib"
+    end
+    # required on my Debian Wheezy test box
+    add_lib << "-lz" << "-ldl"
+  else
+    package value_for_platform(
+      %w[debian ubuntu] => {"default" => "libssl-dev"},
+      %w[redhat centos fedora suse] => {"default" => "openssl-devel"},
+      "default" => "libssl-dev"
+    )
+  end
+end
+
 haproxy_flags += node['haproxy']['source']['flags']
+haproxy_flags << "PCREDIR=#{pcre_dir}"
 haproxy_flags << "DEFINE=#{node['haproxy']['source']['define_flags'].join(" ")}"
-haproxy_flags << "SILENT_DEFINE=#{node['haproxy']['source']['silent_define_flags'].join(" ")}"
+haproxy_flags << "SILENT_DEFINE=#{(node['haproxy']['source']['silent_define_flags'] + silent_define).join(" ")}"
 haproxy_flags << "ADDLIB=#{add_lib.join(" ")}"
 haproxy_flags << "ADDINC=#{add_inc.join(" ")}"
 
-haproxy_flags_for_shell = haproxy_flags.collect {|f| Shellwords.escape(f)}.join(" ")
-
-Chef::Log.debug("Compiling HAProxy #{version} as: make #{haproxy_flags_for_shell}")
-haproxy_compile = bash "compile haproxy #{version}" do
+# FIXME: This doesn't recompile if only the flags change
+Chef::Log.debug("Compiling HAProxy as make #{haproxy_flags.collect {|f| Shellwords.escape(f)}.join(" ")}")
+bash "compile haproxy #{version}" do
   cwd node['haproxy']['source']['dir']
   code <<-EOF
     tar -xzf #{Shellwords.escape(source_path)} -C #{Shellwords.escape(node['haproxy']['source']['dir'])}
     cd haproxy-#{version}
     make clean
-    make #{haproxy_flags_for_shell}
+    make #{haproxy_flags.collect {|f| Shellwords.escape(f)}.join(" ")}
   EOF
-end
-if Chef::Config[:solo] || node['haproxy']['source']['compiled_flags'] == haproxy_flags_for_shell
-  # The flags haven't changed from the last compile attempt
-  # Thus, if the compilation succeeded last time, we can skip it now
-  haproxy_compile.creates "#{node['haproxy']['source']['dir']}/haproxy-#{version}/haproxy"
-else
-  # Flags have changed. Thus we need to perform a full clean compile run
-  # We also remember the flags for next time
-  node.set['haproxy']['source']['compiled_flags'] = haproxy_flags_for_shell
+  creates "#{node['haproxy']['source']['dir']}/haproxy-#{version}/haproxy"
 end
 
 group "haproxy" do

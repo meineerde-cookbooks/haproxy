@@ -158,7 +158,7 @@ haproxy_flags << "ADDINC=#{add_inc.join(" ")}"
 
 # FIXME: This doesn't recompile if only the flags change
 Chef::Log.debug("Compiling HAProxy as make #{haproxy_flags.collect {|f| Shellwords.escape(f)}.join(" ")}")
-bash "compile haproxy #{version}" do
+haproxy_compile = bash "compile haproxy #{version}" do
   cwd node['haproxy']['source']['dir']
   code <<-EOF
     tar -xzf #{Shellwords.escape(source_path)} -C #{Shellwords.escape(node['haproxy']['source']['dir'])}
@@ -167,6 +167,16 @@ bash "compile haproxy #{version}" do
     make #{haproxy_flags.collect {|f| Shellwords.escape(f)}.join(" ")}
   EOF
   creates "#{node['haproxy']['source']['dir']}/haproxy-#{version}/haproxy"
+end
+
+if Chef::Config[:solo] || node['haproxy']['source']['haproxy_compiled_flags'] == haproxy_flags
+  # The flags haven't changed from the last compile attempt
+  # Thus, if the compilation succeeded last time, we can skip it now
+  haproxy_compile.creates "#{node['haproxy']['source']['dir']}/haproxy-#{version}/haproxy"
+else
+  # Flags have changed. Thus we need to perform a full clean compile run
+  # We also remember the flags for next time
+  node.set['haproxy']['source']['haproxy_compiled_flags'] = haproxy_flags
 end
 
 group "haproxy" do

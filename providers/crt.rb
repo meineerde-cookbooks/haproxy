@@ -2,7 +2,7 @@ action :create do
   files = [
     new_resource.key,
     new_resource.certificate,
-    new_resource.intermediates
+    new_resource.intermediate
   ].flatten.compact
 
   haproxy = new_resource.resources(:service => "haproxy")

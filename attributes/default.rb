@@ -1,4 +1,5 @@
 default['haproxy']['dir'] = "/etc/haproxy"
+default['haproxy']['ssl_dir'] = "/etc/haproxy/ssl"
 
 default['haproxy']['install_method'] = "package"
 default['haproxy']['init_style'] = "init"

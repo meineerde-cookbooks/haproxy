@@ -64,6 +64,12 @@ end
   end
 end
 
+directory node['haproxy']['ssl_dir'] do
+  owner "root"
+  group "root"
+  mode "0750"
+end
+
 # "Empty" chroot directory
 # This should only contain HAProxy's UNIX sockets
 directory node['haproxy']['global']['chroot'] do

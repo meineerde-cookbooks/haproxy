@@ -8,6 +8,7 @@ action :create do
   haproxy = new_resource.resources(:service => "haproxy")
   template new_resource.path do
     source "concat_files.erb"
+    cookbook "haproxy"
 
     owner new_resource.owner
     group new_resource.group

@@ -180,7 +180,7 @@ haproxy_compile = bash "compile haproxy #{version}" do
   creates "#{node['haproxy']['source']['dir']}/haproxy-#{version}/haproxy"
 end
 
-if Chef::Config[:solo] || node['haproxy']['source']['haproxy_compiled_flags'] == haproxy_flags
+if Chef::Config[:solo] || !node['haproxy']['source']['haproxy_compiled_flags'] || node['haproxy']['source']['haproxy_compiled_flags'] == haproxy_flags
   # The flags haven't changed from the last compile attempt
   # Thus, if the compilation succeeded last time, we can skip it now
   haproxy_compile.creates "#{node['haproxy']['source']['dir']}/haproxy-#{version}/haproxy"

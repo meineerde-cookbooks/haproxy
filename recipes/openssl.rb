@@ -45,7 +45,7 @@ openssl_compile = bash "Compile OpenSSL #{version}" do
     make install
   EOF
 end
-if Chef::Config[:solo] || node['haproxy']['source']['openssl_compiled_config_flags'] == config_flags_for_shell
+if Chef::Config[:solo] || !node['haproxy']['source']['openssl_compiled_config_flags'] || node['haproxy']['source']['openssl_compiled_config_flags'] == config_flags_for_shell
   # The flags haven't changed from the last compile attempt
   # Thus, if the compilation succeeded last time, we can skip it now
   openssl_compile.not_if do

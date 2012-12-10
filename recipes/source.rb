@@ -5,15 +5,6 @@ package "haproxy" do
   action :purge
 end
 
-value_for_platform(
-  %w[debian ubuntu] => {"default" => %w[libpcre3-dev]},
-  %w[redhat centos fedora suse] => {"default" => %w[pcre-devel]},
-  %w[openbsd freebsd solaris] => {"default" => %w[pcre]},
-  "default" => %w[libpcre3-dev]
-).each do |pkg|
-  package pkg
-end
-
 directory node['haproxy']['source']['dir'] do
   owner "root"
   group "root"
@@ -102,6 +93,17 @@ silent_define = []
 # retrieve and remove the PCREDIR flag (if set)
 # We need it later for OpenSSL. The flag is added again manually.
 if haproxy_flags.include?("USE_PCRE=1") || haproxy_flags.include?("USE_STATIC_PCRE=1")
+  value_for_platform(
+    %w[debian ubuntu] => {"default" => %w[libpcre3-dev]},
+    %w[redhat centos fedora suse] => {"default" => %w[pcre-devel]},
+    %w[openbsd freebsd solaris] => {"default" => %w[pcre]},
+    "default" => %w[libpcre3-dev]
+  ).each do |pkg|
+    package pkg do
+      action :nothing
+    end.run_action(:install)
+  end
+
   pcre_dirs = haproxy_flags.select{ |flag| flag.start_with?("PCREDIR=") }
   haproxy_flags = haproxy_flags - pcre_dirs
 

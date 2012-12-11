@@ -1,7 +1,7 @@
 actions :create, :delete
 default_action :create
 
-attribute :path, :kind_of => String, :name_attribute => true, :required => true
+attribute :path, :kind_of => String, :name_attribute => true
 
 attribute :key, :kind_of => String
 attribute :certificate, :kind_of => String

@@ -177,13 +177,15 @@ haproxy_compile = bash "compile haproxy #{version}" do
     make clean
     make #{haproxy_flags.collect {|f| Shellwords.escape(f)}.join(" ")}
   EOF
-  creates "#{node['haproxy']['source']['dir']}/haproxy-#{version}/haproxy"
 end
 
 if Chef::Config[:solo] || !node['haproxy']['source']['haproxy_compiled_flags'] || node['haproxy']['source']['haproxy_compiled_flags'] == haproxy_flags
   # The flags haven't changed from the last compile attempt
   # Thus, if the compilation succeeded last time, we can skip it now
-  haproxy_compile.creates "#{node['haproxy']['source']['dir']}/haproxy-#{version}/haproxy"
+  haproxy_compile.only_if do
+    node.run_state['force_haproxy_compilation'] ||
+    !File.exist?("#{node['haproxy']['source']['dir']}/haproxy-#{version}/haproxy")
+  end
 else
   # Flags have changed. Thus we need to perform a full clean compile run
   # We also remember the flags for next time

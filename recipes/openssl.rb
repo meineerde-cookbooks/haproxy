@@ -49,11 +49,17 @@ if Chef::Config[:solo] || !node['haproxy']['source']['openssl_compiled_config_fl
   # The flags haven't changed from the last compile attempt
   # Thus, if the compilation succeeded last time, we can skip it now
   openssl_compile.not_if do
-   File.exists?("#{node['haproxy']['source']['dir']}/openssl-#{version}/libssl.a") &&
-   File.exists?("#{node['haproxy']['source']['dir']}/openssl/lib/libssl.a")
- end
+    have_openssl = (
+      File.exists?("#{node['haproxy']['source']['dir']}/openssl-#{version}/libssl.a") &&
+      File.exists?("#{node['haproxy']['source']['dir']}/openssl/lib/libssl.a")
+    )
+
+    node.run_state['force_haproxy_compilation'] = !have_openssl
+    have_openssl
+  end
 else
   # Flags have changed. Thus we need to perform a full clean compile run
   # We also remember the flags for next time
   node.set['haproxy']['source']['openssl_compiled_config_flags'] = config_flags_for_shell
+  node.run_state['force_haproxy_compilation'] = true
 end

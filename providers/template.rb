@@ -1,8 +1,8 @@
 extend HAProxy::Helpers
 
 action :create do
-  backend = template "#{node['haproxy']['dir']}/backend.d/#{new_resource.name}.cfg" do
-    source new_resource.template || "backend_#{new_resource.name}.erb"
+  backend = template "#{node['haproxy']['dir']}/#{new_resource.template_prefix}.d/#{new_resource.name}.cfg" do
+    source new_resource.template || "#{new_resource.template_prefix}_#{new_resource.name}.erb"
     cookbook new_resource.cookbook || cookbook_name # the calling cookbook by default
     variables new_resource.variables
 
@@ -16,7 +16,7 @@ action :create do
 end
 
 action :delete do
-  backend = file "#{node['haproxy']['dir']}/backend.d/#{new_resource.name}.cfg" do
+  backend = file "#{node['haproxy']['dir']}/#{new_resource.template_prefix}.d/#{new_resource.name}.cfg" do
     action :nothing
     notifies haproxy_reload_action, haproxy_service(new_resource)
   end

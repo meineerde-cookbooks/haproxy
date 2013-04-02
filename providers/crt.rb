@@ -1,4 +1,5 @@
-extend HAProxy::Helpers
+extend HAProxy::ProviderHelpers
+include HAProxy::Helpers
 
 action :create do
   files = [
@@ -7,7 +8,7 @@ action :create do
     new_resource.intermediate
   ].flatten.compact
 
-  crt = template(new_resource.path) do
+  template new_resource.path do
     source "concat_files.erb"
     cookbook "haproxy"
 
@@ -17,20 +18,18 @@ action :create do
 
     variables :files => files
 
-    action :nothing
-    notifies haproxy_reload_action, haproxy_service(new_resource)
+    action :create
+    if node['haproxy']['reload_on_update']
+      notifies haproxy_reload_action, haproxy_service(new_resource)
+    end
   end
-
-  crt.run_action :create
-  new_resource.updated_by_last_action(true) if crt.updated_by_last_action?
 end
 
 action :delete do
-  crt = file(new_resource.path) do
-    action :nothing
-    notifies haproxy_reload_action, haproxy_service(new_resource)
+  file new_resource.path do
+    action :delete
+    if node['haproxy']['reload_on_update']
+      notifies haproxy_reload_action, haproxy_service(new_resource)
+    end
   end
-
-  crt.run_action :delete
-  new_resource.updated_by_last_action(true) if crt.updated_by_last_action?
 end

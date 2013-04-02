@@ -13,10 +13,6 @@ end
 
 # Default flags from Debian Wheezy
 config_flags = ["no-idea", "no-mdc2", "no-rc5", "zlib", "enable-tlsext", "no-ssl2"]
-case node['kernel']['machine']
-when "i586", "i686"
-  config_flags << "i586" << "i686/cmov"
-end
 config_flags += node['haproxy']['source']['openssl_config_flags']
 
 # We set the target by ourself and don't want anyone messing with us.

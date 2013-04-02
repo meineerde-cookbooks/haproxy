@@ -7,7 +7,7 @@ action :create do
     new_resource.intermediate
   ].flatten.compact
 
-  template new_resource.path do
+  crt = template(new_resource.path) do
     source "concat_files.erb"
     cookbook "haproxy"
 
@@ -16,15 +16,21 @@ action :create do
     mode new_resource.mode
 
     variables :files => files
-    action :create
 
+    action :nothing
     notifies haproxy_reload_action, haproxy_service(new_resource)
   end
+
+  crt.run_action :create
+  new_resource.updated_by_last_action(true) if crt.updated_by_last_action?
 end
 
 action :delete do
-  file new_resource.path do
-    action :delete
+  crt = file(new_resource.path) do
+    action :nothing
     notifies haproxy_reload_action, haproxy_service(new_resource)
   end
+
+  crt.run_action :delete
+  new_resource.updated_by_last_action(true) if crt.updated_by_last_action?
 end

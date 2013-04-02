@@ -1,6 +1,6 @@
 name "haproxy"
 maintainer "Holger Just"
-maintainer_email "h.just@finn.de"
+maintainer_email "hjust@meine-er.de"
 license "Apache 2.0"
 description "Installs HAProxy and provides configuration primitives"
 long_description IO.read(File.join(File.dirname(__FILE__), 'README.md'))

@@ -1,3 +1,4 @@
+name "haproxy"
 maintainer "Holger Just"
 maintainer_email "h.just@finn.de"
 license "Apache 2.0"

@@ -167,9 +167,7 @@ haproxy_flags << "SILENT_DEFINE=#{(node['haproxy']['source']['silent_define_flag
 haproxy_flags << "ADDLIB=#{add_lib.join(" ")}"
 haproxy_flags << "ADDINC=#{add_inc.join(" ")}"
 
-# FIXME: This doesn't recompile if only the flags change
-Chef::Log.debug("Compiling HAProxy as make #{haproxy_flags.collect {|f| Shellwords.escape(f)}.join(" ")}")
-haproxy_compile = bash "compile haproxy #{version}" do
+bash "compile haproxy #{version}" do
   cwd node['haproxy']['source']['dir']
   code <<-EOF
     tar -xzf #{Shellwords.escape(source_path)} -C #{Shellwords.escape(node['haproxy']['source']['dir'])}
@@ -182,20 +180,33 @@ haproxy_compile = bash "compile haproxy #{version}" do
     extend HAProxy::Helpers
     notifies haproxy_reload_action, haproxy_service_name
   end
+
+  extend Chef::Mixin::Checksum
+  only_if do
+    # some other component (e.g. openssl) forces compilation
+    node.run_state['force_haproxy_compilation'] ||
+
+    # the installed version has changed
+    node['haproxy']['source']['haproxy_compiled_version'] &&
+    node['haproxy']['source']['haproxy_compiled_version'] != version ||
+
+    # the compile flags from last time are available and have changed
+    node['haproxy']['source']['haproxy_compiled_flags'] &&
+    node['haproxy']['source']['haproxy_compiled_flags'] != haproxy_flags ||
+
+    # the compiled or installed binary is not where it is expected
+    !File.exist?("#{node['haproxy']['source']['dir']}/haproxy-#{version}/haproxy") ||
+    !File.exist?("#{node['haproxy']['source']['dir']}/haproxy/sbin/haproxy") ||
+
+    # the compiled and installed binaries differ
+    checksum("#{node['haproxy']['source']['dir']}/haproxy-#{version}/haproxy") !=
+      checksum("#{node['haproxy']['source']['dir']}/haproxy/sbin/haproxy")
+  end
 end
 
-if Chef::Config[:solo] || !node['haproxy']['source']['haproxy_compiled_flags'] || node['haproxy']['source']['haproxy_compiled_flags'] == haproxy_flags
-  # The flags haven't changed from the last compile attempt
-  # Thus, if the compilation succeeded last time, we can skip it now
-  haproxy_compile.only_if do
-    node.run_state['force_haproxy_compilation'] ||
-    !File.exist?("#{node['haproxy']['source']['dir']}/haproxy-#{version}/haproxy")
-  end
-else
-  # Flags have changed. Thus we need to perform a full clean compile run
-  # We also remember the flags for next time
-  node.set['haproxy']['source']['haproxy_compiled_flags'] = haproxy_flags
-end
+# Remember the compile flags for next time
+node.set['haproxy']['source']['haproxy_compiled_flags'] = haproxy_flags
+node.set['haproxy']['source']['haproxy_compiled_version'] = version
 
 group "haproxy" do
   system true

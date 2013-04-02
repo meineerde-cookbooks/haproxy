@@ -40,22 +40,29 @@ openssl_compile = bash "Compile OpenSSL #{version}" do
     make test
     make install
   EOF
-end
-if Chef::Config[:solo] || !node['haproxy']['source']['openssl_compiled_config_flags'] || node['haproxy']['source']['openssl_compiled_config_flags'] == config_flags_for_shell
-  # The flags haven't changed from the last compile attempt
-  # Thus, if the compilation succeeded last time, we can skip it now
-  openssl_compile.not_if do
-    have_openssl = (
-      File.exists?("#{node['haproxy']['source']['dir']}/openssl-#{version}/libssl.a") &&
-      File.exists?("#{node['haproxy']['source']['dir']}/openssl/lib/libssl.a")
-    )
 
-    node.run_state['force_haproxy_compilation'] = !have_openssl
-    have_openssl
+  extend Chef::Mixin::Checksum
+  only_if do
+    node.run_state['force_haproxy_compilation'] ||= begin
+      # the installed version has changed
+      node['haproxy']['source']['openssl_compiled_version'] &&
+      node['haproxy']['source']['openssl_compiled_version'] != version ||
+
+      # the compile flags from last time are available and have changed
+      node['haproxy']['source']['openssl_compiled_config_flags'] &&
+      node['haproxy']['source']['openssl_compiled_config_flags'] != config_flags_for_shell ||
+
+      # the compiled or installed binary is not where it is expected
+      !File.exist?("#{node['haproxy']['source']['dir']}/openssl-#{version}/libssl.a") ||
+      !File.exist?("#{node['haproxy']['source']['dir']}/openssl/lib/libssl.a") ||
+
+      # the compiled and installed binaries differ
+      checksum("#{node['haproxy']['source']['dir']}/openssl-#{version}/apps/openssl") !=
+        checksum("#{node['haproxy']['source']['dir']}/openssl/bin/openssl")
+    end
   end
-else
-  # Flags have changed. Thus we need to perform a full clean compile run
-  # We also remember the flags for next time
-  node.set['haproxy']['source']['openssl_compiled_config_flags'] = config_flags_for_shell
-  node.run_state['force_haproxy_compilation'] = true
 end
+
+# Remember config flags for next time
+node.set['haproxy']['source']['openssl_compiled_config_flags'] = config_flags_for_shell
+node.set['haproxy']['source']['openssl_compiled_version'] = version

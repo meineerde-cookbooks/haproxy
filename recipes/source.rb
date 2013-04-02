@@ -160,6 +160,7 @@ if (node['haproxy']['source']['flags'] & %w[USE_ZLIB=1 USE_OPENSSL=1]).any?
   )
 end
 
+haproxy_flags << "PREFIX=#{node['haproxy']['source']['dir']}/haproxy"
 haproxy_flags += node['haproxy']['source']['flags']
 haproxy_flags << "PCREDIR=#{pcre_dir}"
 haproxy_flags << "DEFINE=#{node['haproxy']['source']['define_flags'].join(" ")}"
@@ -174,6 +175,8 @@ bash "compile haproxy #{version}" do
     cd haproxy-#{version}
     make clean
     make #{haproxy_flags.collect {|f| Shellwords.escape(f)}.join(" ")}
+    rm -rf #{Shellwords.escape(node['haproxy']['source']['dir'] + "/haproxy")}
+    make install #{haproxy_flags.collect {|f| Shellwords.escape(f)}.join(" ")}
   EOF
 
   if node['haproxy']['reload_on_update']
@@ -222,13 +225,13 @@ end
 
 # Install the current version of the executable system-wide
 link node['haproxy']['bin'] do
-  to "#{node['haproxy']['source']['dir']}/haproxy-#{version}/haproxy"
+  to "#{node['haproxy']['source']['dir']}/haproxy/sbin/haproxy"
+end
+link node['haproxy']['systemd_wrapper_bin'] do
+  to "#{node['haproxy']['source']['dir']}/haproxy/sbin/haproxy-systemd-wrapper"
 end
 
 # Install the current version of the man-page system wide
-file "#{node['haproxy']['source']['dir']}/haproxy-#{version}/doc/haproxy.1" do
-  mode "0644"
-end
 link "/usr/share/man/man1/haproxy.1" do
-  to "#{node['haproxy']['source']['dir']}/haproxy-#{version}/doc/haproxy.1"
+  to "#{node['haproxy']['source']['dir']}/haproxy/share/man/man1/haproxy.1"
 end

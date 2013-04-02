@@ -1,5 +1,6 @@
 default['haproxy']['dir'] = "/etc/haproxy"
 default['haproxy']['bin'] = "/usr/sbin/haproxy"
+default['haproxy']['systemd_wrapper_bin'] = "/usr/sbin/haproxy-systemd-wrapper"
 default['haproxy']['reload_on_update'] = true
 default['haproxy']['delay_start'] = true
 default['haproxy']['ssl_dir'] = "/etc/haproxy/ssl"

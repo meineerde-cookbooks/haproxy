@@ -1,0 +1,6 @@
+#!/bin/sh
+
+# create config file
+/usr/sbin/haproxy_join <%= Shellwords.escape node['haproxy']['dir'] %> <%= Shellwords.escape node['haproxy']['dir'] %>/haproxy.cfg
+# exit with non-0 to force runit to still send the signal to the process
+exit 1

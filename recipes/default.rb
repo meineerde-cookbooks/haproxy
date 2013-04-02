@@ -111,8 +111,21 @@ when 'runit'
   include_recipe "runit"
 
   runit_service "haproxy" do
+    owner "root"
+    group "root"
+
+    default_logger true
+    control %w[2 t] # we send USR2 for reload
+
     action service_actions
-    # FIXME: Add support for reload
+    only_if do
+      if File.exist?(node['haproxy']['systemd_wrapper_bin'])
+        true
+      else
+        Chef::Log.warn("runit support requires haproxy-systemd-wrapper which is available since HAProxy 1.5-dev18")
+        false
+      end
+    end
   end
 end
 

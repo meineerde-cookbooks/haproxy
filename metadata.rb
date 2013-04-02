@@ -13,3 +13,4 @@ end
 
 depends "build-essential"
 depends "perl"
+depends "runit"

@@ -177,6 +177,11 @@ haproxy_compile = bash "compile haproxy #{version}" do
     make clean
     make #{haproxy_flags.collect {|f| Shellwords.escape(f)}.join(" ")}
   EOF
+
+  if node['haproxy']['reload_on_update']
+    extend HAProxy::Helpers
+    notifies haproxy_reload_action, haproxy_service_name
+  end
 end
 
 if Chef::Config[:solo] || !node['haproxy']['source']['haproxy_compiled_flags'] || node['haproxy']['source']['haproxy_compiled_flags'] == haproxy_flags

@@ -4,6 +4,10 @@ when 'source'
 when 'package'
   package "haproxy" do
     action :install
+    if node['haproxy']['reload_on_update']
+      extend HAProxy::Helpers
+      notifies haproxy_reload_action, haproxy_service_name
+    end
   end
 end
 
@@ -87,6 +91,9 @@ cookbook_file "/usr/sbin/haproxy_join" do
   mode "0755"
 end
 
+service_actions = [:enable]
+service_actions << :start unless node['haproxy']['delay_start']
+
 case node['haproxy']['init_style']
 when 'init'
   template "/etc/init.d/haproxy" do
@@ -98,13 +105,23 @@ when 'init'
 
   service "haproxy" do
     supports :reload => true
-    action [ :enable ]
+    action service_actions
   end
 when 'runit'
   include_recipe "runit"
 
   runit_service "haproxy" do
-    action [ :enable ]
+    action service_actions
     # FIXME: Add support for reload
   end
+end
+
+ruby_block "Schedule delayed HAProxy start" do
+  block do
+    # NOP NOP NOP
+  end
+  only_if{ node['haproxy']['delay_start'] }
+
+  extend HAProxy::Helpers
+  notifies :start, haproxy_service_name
 end

@@ -205,7 +205,7 @@ user "haproxy" do
 end
 
 # Install the current version of the executable system-wide
-link "/usr/sbin/haproxy" do
+link node['haproxy']['bin'] do
   to "#{node['haproxy']['source']['dir']}/haproxy-#{version}/haproxy"
 end
 

@@ -15,7 +15,7 @@ PATH=/sbin:/usr/sbin:/bin:/usr/bin
 PIDFILE=<%= Shellwords.escape node['haproxy']['global']['pidfile'] %>
 CONFIG=<%= Shellwords.escape node['haproxy']['dir'] %>/haproxy.cfg
 CONFIG_DIR=<%= Shellwords.escape node['haproxy']['dir'] %>
-HAPROXY=/usr/sbin/haproxy
+HAPROXY=<%= node['haproxy']['bin'] %>
 HAPROXY_JOIN=/usr/sbin/haproxy_join
 EXTRAOPTS=
 ENABLED=0

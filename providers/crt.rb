@@ -1,3 +1,5 @@
+extend HAProxy::Helpers
+
 action :create do
   files = [
     new_resource.key,
@@ -5,7 +7,6 @@ action :create do
     new_resource.intermediate
   ].flatten.compact
 
-  haproxy = new_resource.resources(:service => "haproxy")
   template new_resource.path do
     source "concat_files.erb"
     cookbook "haproxy"
@@ -17,15 +18,13 @@ action :create do
     variables :files => files
     action :create
 
-    notifies :reload, haproxy
+    notifies haproxy_reload_action, haproxy_service(new_resource)
   end
 end
 
 action :delete do
-  haproxy = new_resource.resources(:service => "haproxy")
-
   file new_resource.path do
     action :delete
-    notifies :reload, haproxy
+    notifies haproxy_reload_action, haproxy_service(new_resource)
   end
 end

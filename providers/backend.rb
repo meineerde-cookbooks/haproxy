@@ -1,22 +1,20 @@
-action :create do
-  haproxy = new_resource.resources(:service => "haproxy")
+extend HAProxy::Helpers
 
+action :create do
   template "#{node['haproxy']['dir']}/backend.d/#{new_resource.name}.cfg" do
     source new_resource.template || "backend_#{new_resource.name}.erb"
     cookbook new_resource.cookbook || cookbook_name # the calling cookbook by default
     variables new_resource.variables
 
     action :create
-    notifies :start, haproxy
-    notifies :reload, haproxy
+    notifies :start, haproxy_service(new_resource)
+    notifies haproxy_reload_action, haproxy_service(new_resource)
   end
 end
 
 action :delete do
-  haproxy = new_resource.resources(:service => "haproxy")
-
   file "#{node['haproxy']['dir']}/backend.d/#{new_resource.name}.cfg" do
     action :delete
-    notifies :reload, haproxy
+    notifies haproxy_reload_action, haproxy_service(new_resource)
   end
 end

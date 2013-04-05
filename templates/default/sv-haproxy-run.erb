@@ -1,7 +1,11 @@
 #!/bin/sh
 
+if [ -e /etc/default/haproxy ]; then
+  . /etc/default/haproxy
+fi
+
 # create config file
 /usr/sbin/haproxy_join <%= Shellwords.escape node['haproxy']['dir'] %> <%= Shellwords.escape node['haproxy']['dir'] %>/haproxy.cfg
 
 # start the service
-exec <%= node['haproxy']['systemd_wrapper_bin'] %> -f <%= Shellwords.escape node['haproxy']['dir'] %>/haproxy.cfg -p <%= Shellwords.escape node['haproxy']['global']['pidfile'] %>
+exec <%= node['haproxy']['systemd_wrapper_bin'] %> -f <%= Shellwords.escape node['haproxy']['dir'] %>/haproxy.cfg -p <%= Shellwords.escape node['haproxy']['global']['pidfile'] %> $EXTRAOPTS

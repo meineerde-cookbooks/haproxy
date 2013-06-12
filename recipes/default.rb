@@ -57,6 +57,9 @@ settings['defaults'] = node['haproxy']['defaults'].to_hash
     owner "root"
     group "root"
     mode "0644"
+
+    extend HAProxy::Helpers
+    notifies haproxy_reload_action, haproxy_service_name
   end
 end
 

@@ -25,34 +25,28 @@ template "/etc/default/haproxy" do
   mode "0644"
 end
 
-settings = {}
-
-### GLOBAL SETTINGS
-settings['global'] = node['haproxy']['global'].to_hash
-
-if settings['global']['daemon'].nil?
+if node['haproxy']['global']['daemon'].nil?
   # only enable the daemon mode if we use SysV Init
-  settings['global']['daemon'] = (node['haproxy']['init_style'] == "init") || settings['global']['nbproc'] > 1
+  node.override['haproxy']['global']['daemon'] = (node['haproxy']['init_style'] == "init") || node['haproxy']['global']['nbproc'] > 1
 end
 
-settings['global']['stats socket'] = [].tap do |s|
-  s << node['haproxy']['global']['stats socket']['path']
-  s << "user" << (node['haproxy']['global']['stats socket']['user'] || node['haproxy']['global']['user'])
-  s << "group" << (node['haproxy']['global']['stats socket']['group'] || node['haproxy']['global']['group'])
-  s << "mode" << node['haproxy']['global']['stats socket']['mode']
-  s << "level" << node['haproxy']['global']['stats socket']['level']
-  s
-end.join(" ")
+unless node['haproxy']['global']['stats socket'].is_a?(String)
+  node.override['haproxy']['global']['stats socket'] = [].tap do |s|
+    s << node['haproxy']['global']['stats socket']['path']
+    s << "user" << (node['haproxy']['global']['stats socket']['user'] || node['haproxy']['global']['user'])
+    s << "group" << (node['haproxy']['global']['stats socket']['group'] || node['haproxy']['global']['group'])
+    s << "mode" << node['haproxy']['global']['stats socket']['mode']
+    s << "level" << node['haproxy']['global']['stats socket']['level']
+    s
+  end.join(" ")
+end
 
-settings['global']['node'] ||= node['fqdn']
-
-### DEFAULT SETTINGS
-settings['defaults'] = node['haproxy']['defaults'].to_hash
+node.override['haproxy']['global']['node'] = node['fqdn'] unless node['haproxy']['global']['node']
 
 %w[global defaults].each do |cfg_type|
   template File.join(node['haproxy']['dir'], "#{cfg_type}.cfg") do
     source "key_value.erb"
-    variables :data => settings[cfg_type]
+    variables :data => node['haproxy'][cfg_type]
 
     owner "root"
     group "root"

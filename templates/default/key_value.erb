@@ -1,4 +1,4 @@
-<% @data.reject{ |k, v| [false,nil].include?(v) }.keys.sort.each do |key| %>
+<% @data.to_hash.reject{ |k, v| [false,nil].include?(v) }.keys.sort.each do |key| %>
 <% Array(@data[key]).each do |value| %>
 <%= key %> <%= value unless value == true %>
 <% end %>

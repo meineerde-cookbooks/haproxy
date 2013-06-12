@@ -122,7 +122,8 @@ stop)
 reload|force-reload)
   log_daemon_msg "Reloading haproxy" "haproxy"
   haproxy_reload
-  case "$?" in
+  ret=$?
+  case "$ret" in
   0|1)
     log_end_msg 0
     ;;
@@ -130,6 +131,7 @@ reload|force-reload)
     log_end_msg 1
     ;;
   esac
+  exit $ret
   ;;
 restart)
   log_daemon_msg "Restarting haproxy" "haproxy"

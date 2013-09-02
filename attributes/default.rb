@@ -43,3 +43,5 @@ default['haproxy']['defaults']['timeout http-request'] = "5s" # How long to wait
 default['haproxy']['defaults']['timeout queue'] = "10s" # How long to put requests into a queue
 default['haproxy']['defaults']['timeout server'] = "5s" # How long to wait for the server to start responding
 default['haproxy']['defaults']['timeout tarpit'] = nil # by default the same as timeout connect
+
+default['haproxy']['peers'] = {}

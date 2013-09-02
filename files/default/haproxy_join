@@ -11,7 +11,8 @@ cat > "${config}" <<-EOF
 # Generated on $(date)
 EOF
 
-for file in "${config_dir}/global.cfg" "${config_dir}/defaults.cfg"; do
+for obj_type in global defaults peers; do
+  file="${config_dir}/${obj_type}.cfg"
   if [[ -f "$file" ]]; then
     echo -e "\n$(basename "${file%.cfg}")" >> "$config"
     sed 's/^/    /' "$file" >> "$config"

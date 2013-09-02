@@ -1,0 +1,6 @@
+<% @peers.each do |peers_name, peers| %>
+peers <%= peers_name %>
+<% peers.each do |name, peer| %>
+    peer <%= name %> <%= peer.is_a?(String) ? peer : "#{peer["ip"]}:#{peer["port"]}" %>
+<% end %>
+<% end %>

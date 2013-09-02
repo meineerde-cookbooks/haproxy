@@ -57,6 +57,18 @@ node.override['haproxy']['global']['node'] = node['fqdn'] unless node['haproxy']
   end
 end
 
+template File.join(node['haproxy']['dir'], "peers.cfg") do
+  source "peers.erb"
+  variables :peers => node['haproxy']['peers']
+
+  owner "root"
+  group "root"
+  mode "0644"
+
+  extend HAProxy::Helpers
+  notifies haproxy_reload_action, haproxy_service_name
+end
+
 %w[frontend.d backend.d listen.d].each do |dir|
   directory File.join(node['haproxy']['dir'], dir) do
     owner "root"

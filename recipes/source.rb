@@ -1,4 +1,5 @@
 include_recipe "build-essential"
+require "shellwords"
 
 # Deinstall an existing haproxy package as we most probably would conflict
 package "haproxy" do
@@ -111,7 +112,7 @@ if haproxy_flags.include?("USE_PCRE=1") || haproxy_flags.include?("USE_STATIC_PC
     pcre_dir = pcre_dirs.last.sub(/^PCREDIR=/, '')
   else
     # This is how HAProxy's Makefile searches for the PCRE path
-    pcre_config = Chef::ShellOut.new("pcre-config --prefix")
+    pcre_config = Mixlib::ShellOut.new("pcre-config --prefix")
     pcre_config.run_command
     pcre_dir = pcre_config.stdout.strip
     pcre_dir = nil if pcre_dir == ""

@@ -12,12 +12,12 @@ remote_file source_path do
 end
 
 # Default flags from Debian Wheezy
-config_flags = ["no-idea", "no-mdc2", "no-rc5", "zlib", "enable-tlsext", "no-ssl2"]
+config_flags = ["enable-tlsext", "no-ssl2", "no-shared"]
 config_flags += node['haproxy']['source']['openssl_config_flags']
 
 # We set the target by ourself and don't want anyone messing with us.
 config_flags.delete_if {|flag| flag =~ /^\s*--(prefix|openssldir)=/ }
-config_flags += ["--openssldir=#{node['haproxy']['source']['dir']}/openssl"]
+config_flags += ["--prefix=#{node['haproxy']['source']['dir']}/openssl"]
 
 config_flags_for_shell = config_flags.collect {|f| Shellwords.escape(f)}.join(" ")
 
@@ -33,12 +33,13 @@ openssl_compile = bash "Compile OpenSSL #{version}" do
     cd openssl-#{version}
     make clean
     ./config #{config_flags_for_shell}
+    make depend
     make
+    make test
 
     # Install OpenSSL
     rm -rf ../openssl
-    make test
-    make install
+    make install_sw
   EOF
 
   extend Chef::Mixin::Checksum

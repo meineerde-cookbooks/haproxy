@@ -89,10 +89,8 @@ end
 
 add_inc = []
 add_lib = []
-silent_define = []
 
-# retrieve and remove the PCREDIR flag (if set)
-# We need it later for OpenSSL. The flag is added again manually.
+# Install the PCRE library and headers if required
 if haproxy_flags.include?("USE_PCRE=1") || haproxy_flags.include?("USE_STATIC_PCRE=1")
   value_for_platform(
     %w[debian ubuntu] => {"default" => %w[libpcre3-dev]},
@@ -101,21 +99,8 @@ if haproxy_flags.include?("USE_PCRE=1") || haproxy_flags.include?("USE_STATIC_PC
     "default" => %w[libpcre3-dev]
   ).each do |pkg|
     package pkg do
-      action :nothing
-    end.run_action(:install)
-  end
-
-  pcre_dirs = haproxy_flags.select{ |flag| flag.start_with?("PCREDIR=") }
-  haproxy_flags = haproxy_flags - pcre_dirs
-
-  if pcre_dirs.any?
-    pcre_dir = pcre_dirs.last.sub(/^PCREDIR=/, '')
-  else
-    # This is how HAProxy's Makefile searches for the PCRE path
-    pcre_config = Mixlib::ShellOut.new("pcre-config --prefix")
-    pcre_config.run_command
-    pcre_dir = pcre_config.stdout.strip
-    pcre_dir = nil if pcre_dir == ""
+      action :install
+    end
   end
 end
 
@@ -123,24 +108,10 @@ if node['haproxy']['source']['flags'].include?("USE_OPENSSL=1")
   if node['haproxy']['source']['openssl_version']
     include_recipe "haproxy::openssl"
 
-    # Normally we would add the include and lib paths into ADDLIB and ADDINC
-    # but as PCRE typically lives in /usr and the PCRE definitions are added
-    # before the custom definitions, we have to be a bit hacky here.
-    # We have to make sure, that the custom OpenSSL paths are inserted before
-    # any system paths to make sure that gcc always uses our own OpenSSL.
-    #
-    # The include path is added in SILENT_DEFINE to make sure it is
-    # included rather early. As DEFINE and SILENT_DEFINE are not passed to the
-    # linker, we have to perform the little trick: if PCRE is used, we "hack"
-    # the PCREDIR override to also include the OpenSSL lib path before the
-    # PCRE lib path.
+    haproxy_flags.delete_if {|flag| flag =~ /^\s*(SSL_INC|SSL_LIB)=/ }
+    haproxy_flags << "SSL_INC=#{node['haproxy']['source']['dir']}/openssl/include"
+    haproxy_flags << "SSL_LIB=#{node['haproxy']['source']['dir']}/openssl/lib"
 
-    silent_define << "-I#{node['haproxy']['source']['dir']}/openssl/include"
-    if pcre_dir
-      pcre_dir = "#{node['haproxy']['source']['dir']}/openssl/lib -L#{pcre_dir}"
-    else
-      add_lib << "-L#{node['haproxy']['source']['dir']}/openssl/lib"
-    end
     # required on my Debian Wheezy test box
     add_lib << "-lz" << "-ldl"
   else
@@ -163,9 +134,8 @@ end
 
 haproxy_flags << "PREFIX=#{node['haproxy']['source']['dir']}/haproxy"
 haproxy_flags += node['haproxy']['source']['flags']
-haproxy_flags << "PCREDIR=#{pcre_dir}"
 haproxy_flags << "DEFINE=#{node['haproxy']['source']['define_flags'].join(" ")}"
-haproxy_flags << "SILENT_DEFINE=#{(node['haproxy']['source']['silent_define_flags'] + silent_define).join(" ")}"
+haproxy_flags << "SILENT_DEFINE=#{(node['haproxy']['source']['silent_define_flags']).join(" ")}"
 haproxy_flags << "ADDLIB=#{add_lib.join(" ")}"
 haproxy_flags << "ADDINC=#{add_inc.join(" ")}"
 

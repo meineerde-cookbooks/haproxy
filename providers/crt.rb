@@ -8,7 +8,7 @@ action :create do
     new_resource.intermediate
   ].flatten.compact
 
-  template new_resource.path do
+  t = template new_resource.path do
     source "concat_files.erb"
     cookbook "haproxy"
 
@@ -23,13 +23,17 @@ action :create do
       notifies haproxy_reload_action, haproxy_service(new_resource)
     end
   end
+
+  new_resource.updated_by_last_action(t.updated_by_last_action?)
 end
 
 action :delete do
-  file new_resource.path do
+  f = file new_resource.path do
     action :delete
     if node['haproxy']['reload_on_update']
       notifies haproxy_reload_action, haproxy_service(new_resource)
     end
   end
+
+  new_resource.updated_by_last_action(f.updated_by_last_action?)
 end

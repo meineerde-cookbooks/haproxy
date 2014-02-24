@@ -103,6 +103,16 @@ end
 service_actions = [:enable]
 service_actions << :start unless node['haproxy']['delay_start']
 
+def reload_command_with_check(command)
+  tmp_config = <<-BASH.gsub(/\s*\n/s*/, ' ')
+    tmp_config="$(/bin/mktemp)" &&
+    /usr/sbin/haproxy_join #{Shellwords.escape node['haproxy']['dir']} "$tmp_config"
+  BASH
+  cleanup = "ret=$?; rm -f \"$tmp_config\"; $(exit $ret)"
+
+  "#{tmp_config} && #{command}; #{cleanup}"
+end
+
 case node['haproxy']['init_style']
 when 'init'
   template "/etc/init.d/haproxy" do
@@ -112,19 +122,25 @@ when 'init'
     mode "0755"
   end
 
+  reload = reload_command_with_check("/etc/init.d/haproxy reload")
+
   service "haproxy" do
     supports :reload => true
+    reload_command reload
     action service_actions
   end
 when 'runit'
   include_recipe "runit"
 
+  reload = reload_command_with_check("#{node['runit']['sv_bin']} 2 #{node['runit']['service_dir']}/haproxy")
   runit_service "haproxy" do
     owner "root"
     group "root"
 
     default_logger true
     control %w[2 t] # we send USR2 for reload
+
+    reload_command reload
 
     action service_actions
     only_if do

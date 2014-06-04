@@ -1,6 +1,7 @@
-<% @peers.each do |peers_name, peers| %>
+<% extend HAProxy::TemplateHelpers %>
+<% data(@data_path).sort.each do |peers_name, peers| %>
 peers <%= peers_name %>
-<% peers.each do |name, peer| %>
+<% peers.sort.each do |name, peer| %>
     peer <%= name %> <%= peer.is_a?(String) ? peer : "#{peer["ip"]}:#{peer["port"]}" %>
 <% end %>
 <% end %>

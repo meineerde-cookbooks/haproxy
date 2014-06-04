@@ -1,5 +1,6 @@
-<% @data.to_hash.reject{ |k, v| [false,nil].include?(v) }.keys.sort.each do |key| %>
-<% Array(@data[key]).each do |value| %>
-<%= key %> <%= value unless value == true %>
+<% extend HAProxy::TemplateHelpers %>
+<% data(@data_path).reject{ |k, v| [false,nil].include?(v) }.sort.each do |key, value| %>
+<% Array(value).each do |v| %>
+<%= key %> <%= v unless v == true %>
 <% end %>
 <% end %>

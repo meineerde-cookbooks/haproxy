@@ -46,7 +46,7 @@ node.override['haproxy']['global']['node'] = node['fqdn'] unless node['haproxy']
 %w[global defaults].each do |cfg_type|
   template File.join(node['haproxy']['dir'], "#{cfg_type}.cfg") do
     source "key_value.erb"
-    variables :data => node['haproxy'][cfg_type]
+    variables :data_path => "haproxy/#{cfg_type}"
 
     owner "root"
     group "root"
@@ -59,7 +59,7 @@ end
 
 template File.join(node['haproxy']['dir'], "peers.cfg") do
   source "peers.erb"
-  variables :peers => node['haproxy']['peers']
+  variables :data_path => 'haproxy/peers'
 
   owner "root"
   group "root"

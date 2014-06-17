@@ -104,7 +104,7 @@ service_actions = [:enable]
 service_actions << :start unless node['haproxy']['delay_start']
 
 def reload_command_with_check(command)
-  tmp_config = <<-BASH.gsub(/^\s*/, '')
+  tmp_config = <<-BASH.gsub(/^\s*/, '').strip
     tmp_config="$(/bin/mktemp)" && \\
     /usr/sbin/haproxy_join #{Shellwords.escape node['haproxy']['dir']} "$tmp_config"
   BASH

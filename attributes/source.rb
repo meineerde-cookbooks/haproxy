@@ -3,8 +3,12 @@ default['haproxy']['source']['version'] = "1.4.22"
 # The checksum for the downloaded source file
 # This MUST be a SHA256 sum. The MD5 sums from the HAProxy site won't suffice
 default['haproxy']['source']['checksum'] = "ba221b3eaa4d71233230b156c3000f5c2bd4dace94d9266235517fe42f917fc6"
-# You can overriode the URL where the tar.gz is fetched from. The version
-# and the Checksum MUST still be properly set.
+# The base-URL from which to download the source tar.gz. The full URL is
+# constructed from the defined version by default. See the soyrce recipe
+# for details about the exact rules.
+default['haproxy']['source']['base_url'] = 'http://www.haproxy.org/download'
+# You can also overriode the full URL where the tar.gz is fetched from.
+# The version and the checksum MUST still be properly set.
 default['haproxy']['source']['url'] = nil
 # The target directory to pull the sources into and generate the compiled binary
 # A subdirectory for each version is created there

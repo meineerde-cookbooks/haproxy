@@ -23,11 +23,11 @@ haproxy_url = node['haproxy']['source']['url'] || begin
     # We need the major version in there.
     snapshot = snapshot[0] # to extract the snapshot date from the match object
     version = "ss-#{snapshot}"
-    "http://www.haproxy.org/download/#{major}/src/snapshot/haproxy-ss-#{snapshot}.tar.gz"
+    "#{node['haproxy']['source']['base_url']}/#{major}/src/snapshot/haproxy-ss-#{snapshot}.tar.gz"
   elsif version.include?('dev')
-    "http://www.haproxy.org/download/#{major}/src/devel/haproxy-#{version}.tar.gz"
+    "#{node['haproxy']['source']['base_url']}/#{major}/src/devel/haproxy-#{version}.tar.gz"
   else
-    "http://www.haproxy.org/download/#{major}/src/haproxy-#{version}.tar.gz"
+    "#{node['haproxy']['source']['base_url']}/#{major}/src/haproxy-#{version}.tar.gz"
   end
 end
 

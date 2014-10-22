@@ -44,8 +44,9 @@ end
 haproxy_flags = []
 case node['os']
 when "linux"
-  kernel_version = Gem::Version.new node['kernel']['release'].to_s.split(".")[0..2].map(&:to_i).join(".")
+  make = "make"
 
+  kernel_version = Gem::Version.new node['kernel']['release'].to_s.split(".")[0..2].map(&:to_i).join(".")
   case
   when kernel_version < Gem::Version.new("2.4")
     haproxy_flags << "TARGET=linux22"
@@ -61,17 +62,23 @@ when "linux"
   # Use dynamic PCRE by default
   haproxy_flags << "USE_PCRE=1"
 when "solaris"
+  # HAProxy requires GNU make
+  make = "gmake"
+
   haproxy_flags << "TARGET=solaris"
   # static PCRE is strongly recommnded on Solaris
   haproxy_flags << "USE_STATIC_PCRE=1"
 
 when "openbsd", "freebsd"
+  # HAProxy requires GNU make
+  make = "gmake"
+
   haproxy_flags << "TARGET=#{platform}"
-  haproxy_flags << "-f" << "Makefile.bsd"
   haproxy_flags << "REGEX=pcre"
   haproxy_flags << 'COPTS.generic="-Os -fomit-frame-pointer -mgnu"'
 
 else
+  make = "make"
   haproxy_flags << "TARGET=#{os}"
 end
 
@@ -144,10 +151,10 @@ bash "compile haproxy #{version}" do
   code <<-EOF
     tar -xzf #{Shellwords.escape(source_path)} -C #{Shellwords.escape(node['haproxy']['source']['dir'])}
     cd haproxy-#{version}
-    make clean
-    make #{haproxy_flags.collect {|f| Shellwords.escape(f)}.join(" ")}
+    #{make} clean
+    #{make} #{haproxy_flags.collect {|f| Shellwords.escape(f)}.join(" ")}
     rm -rf #{Shellwords.escape(node['haproxy']['source']['dir'] + "/haproxy")}
-    make install #{haproxy_flags.collect {|f| Shellwords.escape(f)}.join(" ")}
+    #{make} install #{haproxy_flags.collect {|f| Shellwords.escape(f)}.join(" ")}
   EOF
 
   if node['haproxy']['reload_on_update']

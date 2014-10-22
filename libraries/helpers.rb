@@ -13,12 +13,5 @@ module HAProxy
         when "runit" then collection.resources(:runit_service => "haproxy")
       end
     end
-
-    def haproxy_reload_action
-      case node['haproxy']['init_style']
-        when "init" then :reload
-        when "runit" then :usr2
-      end
-    end
   end
 end

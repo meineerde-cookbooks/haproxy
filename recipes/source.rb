@@ -159,7 +159,7 @@ bash "compile haproxy #{version}" do
 
   if node['haproxy']['reload_on_update']
     extend HAProxy::Helpers
-    notifies haproxy_reload_action, haproxy_service_name
+    notifies :reload, haproxy_service_name
   end
 
   extend Chef::Mixin::Checksum

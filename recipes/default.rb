@@ -6,7 +6,7 @@ when 'package'
     action :install
     if node['haproxy']['reload_on_update']
       extend HAProxy::Helpers
-      notifies haproxy_reload_action, haproxy_service_name
+      notifies :reload, haproxy_service_name
     end
   end
 end
@@ -53,7 +53,7 @@ node.override['haproxy']['global']['node'] = node['fqdn'] unless node['haproxy']
     mode "0644"
 
     extend HAProxy::Helpers
-    notifies haproxy_reload_action, haproxy_service_name
+    notifies :reload, haproxy_service_name
   end
 end
 
@@ -66,7 +66,7 @@ template File.join(node['haproxy']['dir'], "peers.cfg") do
   mode "0644"
 
   extend HAProxy::Helpers
-  notifies haproxy_reload_action, haproxy_service_name
+  notifies :reload, haproxy_service_name
 end
 
 %w[frontend.d backend.d listen.d].each do |dir|
@@ -98,6 +98,9 @@ cookbook_file "/usr/sbin/haproxy_join" do
   owner "root"
   group "root"
   mode "0755"
+
+  extend HAProxy::Helpers
+  notifies :reload, haproxy_service_name
 end
 
 service_actions = [:enable]
@@ -132,24 +135,33 @@ when 'init'
 when 'runit'
   include_recipe "runit"
 
-  reload = reload_command_with_check("#{node['runit']['sv_bin']} 2 #{node['runit']['service_dir']}/haproxy")
+  reload = reload_command_with_check("#{node['runit']['sv_bin']} reload #{node['runit']['service_dir']}/haproxy")
   runit_service "haproxy" do
     owner "root"
     group "root"
 
     default_logger true
-    control %w[2 t] # we send USR2 for reload
+    control %w[h]
 
     reload_command reload
 
     action service_actions
     only_if do
-      if File.exist?(node['haproxy']['systemd_wrapper_bin'])
+      installed_version = Mixlib::ShellOut.new(node['haproxy']['bin'], '-v').run_command.tap(&:error!).stdout.lines.first.split(' ')[2]
+
+      if File.exist?(node['haproxy']['systemd_wrapper_bin']) && Gem::Version.new(installed_version) >= Gem::Version.new("1.5.5")
         true
       else
-        Chef::Log.warn("runit support requires haproxy-systemd-wrapper which is available since HAProxy 1.5-dev18")
+        Chef::Log.warn("runit support requires haproxy-systemd-wrapper which is available since HAProxy 1.5.5")
         false
       end
+    end
+  end
+
+  # LEGACY: delete old control scripts which where required before HAProxy 1.5.5
+  %w[t 2].each do |control_script|
+    file "#{node['runit']['service_dir']}/haproxy/control/#{control_script}" do
+      action :delete
     end
   end
 end

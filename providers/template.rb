@@ -9,7 +9,7 @@ action :create do
 
     action :create
     if node['haproxy']['reload_on_update']
-      notifies haproxy_reload_action, haproxy_service(new_resource)
+      notifies :reload, haproxy_service(new_resource)
     end
   end
 
@@ -20,7 +20,7 @@ action :delete do
   f = file "#{node['haproxy']['dir']}/#{new_resource.template_prefix}.d/#{new_resource.name}.cfg" do
     action :delete
     if node['haproxy']['reload_on_update']
-      notifies haproxy_reload_action, haproxy_service(new_resource)
+      notifies :reload, haproxy_service(new_resource)
     end
   end
 

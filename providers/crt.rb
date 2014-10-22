@@ -20,7 +20,7 @@ action :create do
 
     action :create
     if node['haproxy']['reload_on_update']
-      notifies haproxy_reload_action, haproxy_service(new_resource)
+      notifies :reload, haproxy_service(new_resource)
     end
   end
 
@@ -31,7 +31,7 @@ action :delete do
   f = file new_resource.path do
     action :delete
     if node['haproxy']['reload_on_update']
-      notifies haproxy_reload_action, haproxy_service(new_resource)
+      notifies :reload, haproxy_service(new_resource)
     end
   end
 

@@ -1,6 +1,0 @@
-#!/bin/sh
-
-/bin/kill -TERM `cat <%= Shellwords.escape node['haproxy']['global']['pidfile'] %>`
-
-# exit with non-0 to force runit to still send the signal to the process
-exit 1

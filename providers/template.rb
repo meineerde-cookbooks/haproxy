@@ -1,5 +1,4 @@
 extend HAProxy::ProviderHelpers
-include HAProxy::Helpers
 
 action :create do
   t = template "#{node['haproxy']['dir']}/#{new_resource.template_prefix}.d/#{new_resource.name}.cfg" do
@@ -9,7 +8,7 @@ action :create do
 
     action :create
     if node['haproxy']['reload_on_update']
-      notifies :reload, haproxy_service(new_resource)
+      notifies :reload, new_resource.resources(:service => 'haproxy')
     end
   end
 
@@ -20,7 +19,7 @@ action :delete do
   f = file "#{node['haproxy']['dir']}/#{new_resource.template_prefix}.d/#{new_resource.name}.cfg" do
     action :delete
     if node['haproxy']['reload_on_update']
-      notifies :reload, haproxy_service(new_resource)
+      notifies :reload, new_resource.resources(:service => 'haproxy')
     end
   end
 

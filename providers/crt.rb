@@ -1,5 +1,4 @@
 extend HAProxy::ProviderHelpers
-include HAProxy::Helpers
 
 action :create do
   files = [
@@ -20,7 +19,7 @@ action :create do
 
     action :create
     if node['haproxy']['reload_on_update']
-      notifies :reload, haproxy_service(new_resource)
+      notifies :reload, new_resource.resources(:service => 'haproxy')
     end
   end
 
@@ -31,7 +30,7 @@ action :delete do
   f = file new_resource.path do
     action :delete
     if node['haproxy']['reload_on_update']
-      notifies :reload, haproxy_service(new_resource)
+      notifies :reload, new_resource.resources(:service => 'haproxy')
     end
   end
 

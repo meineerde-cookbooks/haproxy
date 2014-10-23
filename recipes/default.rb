@@ -4,10 +4,7 @@ when 'source'
 when 'package'
   package "haproxy" do
     action :install
-    if node['haproxy']['reload_on_update']
-      extend HAProxy::Helpers
-      notifies :reload, haproxy_service_name
-    end
+    notifies :reload, 'service[haproxy]' if node['haproxy']['reload_on_update']
   end
 end
 
@@ -52,8 +49,7 @@ node.override['haproxy']['global']['node'] = node['fqdn'] unless node['haproxy']
     group "root"
     mode "0644"
 
-    extend HAProxy::Helpers
-    notifies :reload, haproxy_service_name
+    notifies :reload, 'service[haproxy]'
   end
 end
 
@@ -65,8 +61,7 @@ template File.join(node['haproxy']['dir'], "peers.cfg") do
   group "root"
   mode "0644"
 
-  extend HAProxy::Helpers
-  notifies :reload, haproxy_service_name
+  notifies :reload, 'service[haproxy]'
 end
 
 %w[frontend.d backend.d listen.d].each do |dir|
@@ -99,8 +94,7 @@ cookbook_file "/usr/sbin/haproxy_join" do
   group "root"
   mode "0755"
 
-  extend HAProxy::Helpers
-  notifies :reload, haproxy_service_name
+  notifies :reload, 'service[haproxy]'
 end
 
 service_actions = [:enable]
@@ -128,7 +122,7 @@ when 'init'
   reload = reload_command_with_check("/etc/init.d/haproxy reload")
 
   service "haproxy" do
-    supports :reload => true
+    supports :reload => true, :status => true
     reload_command reload
     action service_actions
   end
@@ -158,6 +152,22 @@ when 'runit'
     end
   end
 
+  service "haproxy" do
+    supports :status => true, :restart => true, :reload => true
+    reload_command reload
+
+    only_if do
+      installed_version = Mixlib::ShellOut.new(node['haproxy']['bin'], '-v').run_command.tap(&:error!).stdout.lines.first.split(' ')[2]
+
+      if File.exist?(node['haproxy']['systemd_wrapper_bin']) && Gem::Version.new(installed_version) >= Gem::Version.new("1.5.5")
+        true
+      else
+        Chef::Log.warn("runit support requires haproxy-systemd-wrapper which is available since HAProxy 1.5.5")
+        false
+      end
+    end
+  end
+
   # LEGACY: delete old control scripts which where required before HAProxy 1.5.5
   %w[t 2].each do |control_script|
     file "#{node['runit']['service_dir']}/haproxy/control/#{control_script}" do
@@ -172,6 +182,5 @@ ruby_block "Schedule delayed HAProxy start" do
   end
   only_if{ node['haproxy']['delay_start'] }
 
-  extend HAProxy::Helpers
-  notifies :start, haproxy_service_name
+  notifies :start, 'service[haproxy]'
 end

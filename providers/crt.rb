@@ -1,5 +1,7 @@
 extend HAProxy::ProviderHelpers
 
+use_inline_resources
+
 action :create do
   files = [
     new_resource.key,
@@ -18,21 +20,14 @@ action :create do
     variables :files => files
 
     action :create
-    if node['haproxy']['reload_on_update']
-      notifies :reload, new_resource.resources(:service => 'haproxy')
-    end
   end
-
-  new_resource.updated_by_last_action(t.updated_by_last_action?)
 end
 
 action :delete do
-  f = file new_resource.path do
+  file new_resource.path do
     action :delete
     if node['haproxy']['reload_on_update']
       notifies :reload, new_resource.resources(:service => 'haproxy')
     end
   end
-
-  new_resource.updated_by_last_action(f.updated_by_last_action?)
 end

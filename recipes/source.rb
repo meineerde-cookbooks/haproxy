@@ -58,6 +58,8 @@ when "linux"
     haproxy_flags << "TARGET=linux26"
   when kernel_version >= Gem::Version.new("2.6.28")
     haproxy_flags << "TARGET=linux2628"
+    # getaddrinfo should be safe on recent all recent distributions
+    haproxy_flags << "USE_GETADDRINFO=1"
   end
   # Use dynamic PCRE by default
   haproxy_flags << "USE_PCRE=1"

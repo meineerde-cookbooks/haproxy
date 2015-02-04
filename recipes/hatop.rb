@@ -22,7 +22,9 @@ when "source"
   bash "install_hatop" do
     cwd Chef::Config[:file_cache_path]
     code <<-EOF
-      rm -r hatop-#{version}
+      set -e
+
+      rm -rf hatop-#{version}
       gunzip -c #{Shellwords.escape(source_path)} | tar -x
       cd hatop-#{version}
 

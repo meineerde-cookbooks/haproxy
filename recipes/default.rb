@@ -64,7 +64,7 @@ template File.join(node['haproxy']['dir'], "peers.cfg") do
   notifies :reload, 'service[haproxy]'
 end
 
-%w[frontend.d backend.d listen.d].each do |dir|
+%w[userlist.d frontend.d backend.d listen.d].each do |dir|
   directory File.join(node['haproxy']['dir'], dir) do
     owner "root"
     group "root"

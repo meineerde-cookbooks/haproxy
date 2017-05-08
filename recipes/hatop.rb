@@ -6,7 +6,7 @@ when "source"
 
   version = node["haproxy"]["hatop"]["version"]
   source_path = "#{Chef::Config[:file_cache_path]}/hatop-#{version}.tar.gz"
-  source_url = node["haproxy"]["hatop"]["download_url"] || "http://hatop.googlecode.com/files/hatop-#{version}.tar.gz"
+  source_url = node["haproxy"]["hatop"]["download_url"] || "https://github.com/feurix/hatop/archive/v#{version}.tar.gz"
 
   remote_file source_path do
     source source_url

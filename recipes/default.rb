@@ -111,21 +111,6 @@ def reload_command_with_check(command)
 end
 
 case node['haproxy']['init_style']
-when 'init'
-  template "/etc/init.d/haproxy" do
-    source "haproxy.init.erb"
-    owner "root"
-    group "root"
-    mode "0755"
-  end
-
-  reload = reload_command_with_check("/etc/init.d/haproxy reload")
-
-  service "haproxy" do
-    supports :reload => true, :status => true
-    reload_command reload
-    action service_actions
-  end
 when 'runit'
   include_recipe "runit"
 
@@ -174,6 +159,8 @@ when 'runit'
       action :delete
     end
   end
+else
+  raise "Unexpected value for  node['haproxy']['init_style'] - #{node['haproxy']['init_style']}"
 end
 
 ruby_block "Schedule delayed HAProxy start" do

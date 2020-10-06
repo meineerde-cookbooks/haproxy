@@ -6,7 +6,7 @@ default['haproxy']['delay_start'] = true
 default['haproxy']['ssl_dir'] = "/etc/haproxy/ssl"
 
 default['haproxy']['install_method'] = "package"
-default['haproxy']['init_style'] = "init"
+default['haproxy']['init_style'] = "runit"
 default['haproxy']['extra_opts'] = []
 
 # You can set any additional valid values for global and default values in Roles

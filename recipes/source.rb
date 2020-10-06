@@ -218,11 +218,18 @@ end
 link node['haproxy']['bin'] do
   to "#{node['haproxy']['source']['dir']}/haproxy/sbin/haproxy"
 end
-link node['haproxy']['systemd_wrapper_bin'] do
-  to "#{node['haproxy']['source']['dir']}/haproxy/sbin/haproxy-systemd-wrapper"
-end
 
 # Install the current version of the man-page system wide
 link "/usr/share/man/man1/haproxy.1" do
   to "#{node['haproxy']['source']['dir']}/haproxy/share/man/man1/haproxy.1"
+end
+
+if Gem::Version.new(version) < Gem::Version.new('1.8')
+  link node['haproxy']['systemd_wrapper_bin'] do
+    to "#{node['haproxy']['source']['dir']}/haproxy/sbin/haproxy-systemd-wrapper"
+  end
+else
+  link node['haproxy']['systemd_wrapper_bin'] do
+    action :delete
+  end
 end

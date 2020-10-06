@@ -32,9 +32,9 @@ openssl_compile = bash "Compile OpenSSL #{version}" do
   code <<-EOF
     set -e
 
+    rm -rf #{Shellwords.escape(node['haproxy']['source']['dir'])}/openssl-#{version}
     tar -xzf #{Shellwords.escape(source_path)} -C #{Shellwords.escape(node['haproxy']['source']['dir'])}
     cd openssl-#{version}
-    make clean
     ./config #{config_flags_for_shell}
     make depend
     make

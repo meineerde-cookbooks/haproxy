@@ -154,6 +154,9 @@ previous_compiled_flags = node['haproxy']['source']['haproxy_compiled_flags']
 bash "compile haproxy #{version}" do
   cwd node['haproxy']['source']['dir']
   code <<-EOF
+    set -e
+
+    rm -rf #{Shellwords.escape(node['haproxy']['source']['dir'])}/haproxy-#{version}
     tar -xzf #{Shellwords.escape(source_path)} -C #{Shellwords.escape(node['haproxy']['source']['dir'])}
     cd haproxy-#{version}
     #{make} clean

@@ -1,8 +1,8 @@
 # The version of HAProxy to install
-default['haproxy']['source']['version'] = "1.5.10"
+default['haproxy']['source']['version'] = "1.8.26"
 # The checksum for the downloaded source file
 # This MUST be a SHA256 sum. The MD5 sums from the HAProxy site won't suffice
-default['haproxy']['source']['checksum'] = "090264c834477c290f6ad6da558731d50aede0800996742d15e870b9947fe517"
+default['haproxy']['source']['checksum'] = "e3c2a81b6f26dcb736a34ebb5f134d3251ceccf30386214655fa7ed6d3afa400"
 # The base-URL from which to download the source tar.gz. The full URL is
 # constructed from the defined version by default. See the soyrce recipe
 # for details about the exact rules.

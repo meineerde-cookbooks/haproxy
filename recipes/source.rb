@@ -148,6 +148,9 @@ haproxy_flags << "SILENT_DEFINE=#{(node['haproxy']['source']['silent_define_flag
 haproxy_flags << "ADDLIB=#{add_lib.join(" ")}"
 haproxy_flags << "ADDINC=#{add_inc.join(" ")}"
 
+previous_compiled_version = node['haproxy']['source']['haproxy_compiled_version']
+previous_compiled_flags = node['haproxy']['source']['haproxy_compiled_flags']
+
 bash "compile haproxy #{version}" do
   cwd node['haproxy']['source']['dir']
   code <<-EOF
@@ -169,12 +172,12 @@ bash "compile haproxy #{version}" do
     node.run_state['force_haproxy_compilation'] ||
 
     # the installed version has changed
-    node['haproxy']['source']['haproxy_compiled_version'] &&
-    node['haproxy']['source']['haproxy_compiled_version'] != version ||
+    previous_compiled_version &&
+    previous_compiled_version != version ||
 
     # the compile flags from last time are available and have changed
-    node['haproxy']['source']['haproxy_compiled_flags'] &&
-    node['haproxy']['source']['haproxy_compiled_flags'] != haproxy_flags ||
+    previous_compiled_flags &&
+    previous_compiled_flags != haproxy_flags ||
 
     # the compiled or installed binary is not where it is expected
     !File.exist?("#{node['haproxy']['source']['dir']}/haproxy-#{version}/haproxy") ||

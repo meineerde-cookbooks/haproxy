@@ -21,6 +21,9 @@ config_flags += ["--prefix=#{node['haproxy']['source']['dir']}/openssl"]
 
 config_flags_for_shell = config_flags.collect {|f| Shellwords.escape(f)}.join(" ")
 
+previous_compiled_config_flags = node['haproxy']['source']['openssl_compiled_config_flags']
+previous_compiled_version = node['haproxy']['source']['openssl_compiled_version']
+
 # Unpack the sources and compile them
 # Then install the result to /opt/haproxy/openssl.
 Chef::Log.debug("Compiling OpenSSL #{version} as: make #{config_flags_for_shell}")
@@ -46,12 +49,12 @@ openssl_compile = bash "Compile OpenSSL #{version}" do
   only_if do
     node.run_state['force_haproxy_compilation'] ||= begin
       # the installed version has changed
-      node['haproxy']['source']['openssl_compiled_version'] &&
-      node['haproxy']['source']['openssl_compiled_version'] != version ||
+      previous_compiled_version &&
+      previous_compiled_version != version ||
 
       # the compile flags from last time are available and have changed
-      node['haproxy']['source']['openssl_compiled_config_flags'] &&
-      node['haproxy']['source']['openssl_compiled_config_flags'] != config_flags_for_shell ||
+      previous_compiled_config_flags &&
+      previous_compiled_config_flags != config_flags_for_shell ||
 
       # the compiled or installed binary is not where it is expected
       !File.exist?("#{node['haproxy']['source']['dir']}/openssl-#{version}/libssl.a") ||

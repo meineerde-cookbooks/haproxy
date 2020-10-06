@@ -125,39 +125,11 @@ when 'runit'
     reload_command reload
 
     action service_actions
-    only_if do
-      installed_version = Mixlib::ShellOut.new(node['haproxy']['bin'], '-v').run_command.tap(&:error!).stdout.lines.first.split(' ')[2]
-
-      if File.exist?(node['haproxy']['systemd_wrapper_bin']) && Gem::Version.new(installed_version) >= Gem::Version.new("1.5.5")
-        true
-      else
-        Chef::Log.warn("runit support requires haproxy-systemd-wrapper which is available since HAProxy 1.5.5")
-        false
-      end
-    end
   end
 
   service "haproxy" do
     supports :status => true, :restart => true, :reload => true
     reload_command reload
-
-    only_if do
-      installed_version = Mixlib::ShellOut.new(node['haproxy']['bin'], '-v').run_command.tap(&:error!).stdout.lines.first.split(' ')[2]
-
-      if File.exist?(node['haproxy']['systemd_wrapper_bin']) && Gem::Version.new(installed_version) >= Gem::Version.new("1.5.5")
-        true
-      else
-        Chef::Log.warn("runit support requires haproxy-systemd-wrapper which is available since HAProxy 1.5.5")
-        false
-      end
-    end
-  end
-
-  # LEGACY: delete old control scripts which where required before HAProxy 1.5.5
-  %w[t 2].each do |control_script|
-    file "#{node['runit']['service_dir']}/haproxy/control/#{control_script}" do
-      action :delete
-    end
   end
 else
   raise "Unexpected value for  node['haproxy']['init_style'] - #{node['haproxy']['init_style']}"
@@ -167,7 +139,7 @@ ruby_block "Schedule delayed HAProxy start" do
   block do
     # NOP NOP NOP
   end
-  only_if{ node['haproxy']['delay_start'] }
+  only_if { node['haproxy']['delay_start'] }
 
   notifies :start, 'service[haproxy]'
 end

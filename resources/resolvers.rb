@@ -4,7 +4,7 @@ default_action :create
 attr_reader :template_prefix
 def initialize(*args)
   super
-  @template_prefix = "resolver"
+  @template_prefix = "resolvers"
   @provider = Chef::Provider::HaproxyTemplate
 end
 

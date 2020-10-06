@@ -19,7 +19,7 @@ for obj_type in global defaults; do
   fi
 done
 
-for obj_type in userlist resolver mailers peers listen frontend backend; do
+for obj_type in userlist resolvers mailers peers listen frontend backend; do
   for file in "${config_dir}/${obj_type}.d/"*.cfg; do
     if [[ -f "$file" ]]; then
       echo -e "\n# ${file}\n${obj_type} $(basename "${file%.cfg}")" >> "$config"

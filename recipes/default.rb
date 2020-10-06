@@ -53,7 +53,7 @@ node.override['haproxy']['global']['node'] = node['fqdn'] unless node['haproxy']
   end
 end
 
-%w[userlist.d frontend.d backend.d listen.d resolver.d mailers.d peers.d].each do |dir|
+%w[userlist.d frontend.d backend.d listen.d resolvers.d mailers.d peers.d].each do |dir|
   directory File.join(node['haproxy']['dir'], dir) do
     owner "root"
     group "root"

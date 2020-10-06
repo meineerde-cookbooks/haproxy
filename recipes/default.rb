@@ -124,6 +124,13 @@ when 'runit'
 
     reload_command reload
 
+    options lazy {
+      installed_version = Mixlib::ShellOut.new(node['haproxy']['bin'], '-v').run_command.tap(&:error!).stdout.lines.first.split(' ')[2]
+      {
+        :haproxy_version => Gem::Version.new(installed_version)
+      }
+    }
+
     action service_actions
   end
 

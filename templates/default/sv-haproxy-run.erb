@@ -8,4 +8,8 @@ fi
 /usr/sbin/haproxy_join <%= Shellwords.escape node['haproxy']['dir'] %> <%= Shellwords.escape node['haproxy']['dir'] %>/haproxy.cfg
 
 # start the service
+<% if @options[:haproxy_version] >= Gem::Version.new('1.8') %>
+exec <%= node['haproxy']['bin'] %> -W -f <%= Shellwords.escape node['haproxy']['dir'] %>/haproxy.cfg -p <%= Shellwords.escape node['haproxy']['global']['pidfile'] %> $EXTRAOPTS
+<% else %>
 exec <%= node['haproxy']['systemd_wrapper_bin'] %> -f <%= Shellwords.escape node['haproxy']['dir'] %>/haproxy.cfg -p <%= Shellwords.escape node['haproxy']['global']['pidfile'] %> $EXTRAOPTS
+<% end %>

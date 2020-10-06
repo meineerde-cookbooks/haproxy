@@ -17,6 +17,7 @@ config_flags += node['haproxy']['source']['openssl_config_flags']
 # We set the target by ourself and don't want anyone messing with us.
 config_flags.delete_if {|flag| flag =~ /^\s*--(prefix|openssldir)=/ }
 config_flags += ["--prefix=#{node['haproxy']['source']['dir']}/openssl"]
+config_flags += ["--openssldir=#{node['haproxy']['source']['dir']}/openssl"]
 
 config_flags_for_shell = config_flags.collect {|f| Shellwords.escape(f)}.join(" ")
 

@@ -6,7 +6,7 @@ default['haproxy']['source']['checksum'] = "090264c834477c290f6ad6da558731d50aed
 # The base-URL from which to download the source tar.gz. The full URL is
 # constructed from the defined version by default. See the soyrce recipe
 # for details about the exact rules.
-default['haproxy']['source']['base_url'] = 'http://www.haproxy.org/download'
+default['haproxy']['source']['base_url'] = 'https://www.haproxy.org/download'
 # You can also overriode the full URL where the tar.gz is fetched from.
 # The version and the checksum MUST still be properly set.
 default['haproxy']['source']['url'] = nil

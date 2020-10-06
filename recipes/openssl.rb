@@ -11,8 +11,7 @@ remote_file source_path do
   backup false
 end
 
-# Default flags from Debian Wheezy
-config_flags = ["enable-tlsext", "no-ssl2", "no-shared"]
+config_flags = ["no-ssl2", "no-shared"]
 config_flags += node['haproxy']['source']['openssl_config_flags']
 
 # We set the target by ourself and don't want anyone messing with us.

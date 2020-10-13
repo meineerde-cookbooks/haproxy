@@ -68,5 +68,5 @@ openssl_compile = bash "Compile OpenSSL #{version}" do
 end
 
 # Remember config flags for next time
-node.set['haproxy']['source']['openssl_compiled_config_flags'] = config_flags_for_shell
-node.set['haproxy']['source']['openssl_compiled_version'] = version
+node.normal['haproxy']['source']['openssl_compiled_config_flags'] = config_flags_for_shell
+node.normal['haproxy']['source']['openssl_compiled_version'] = version

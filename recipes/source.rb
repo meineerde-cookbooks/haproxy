@@ -199,8 +199,8 @@ bash "compile haproxy #{version}" do
 end
 
 # Remember the compile flags for next time
-node.set['haproxy']['source']['haproxy_compiled_flags'] = haproxy_flags
-node.set['haproxy']['source']['haproxy_compiled_version'] = version
+node.normal['haproxy']['source']['haproxy_compiled_flags'] = haproxy_flags
+node.normal['haproxy']['source']['haproxy_compiled_version'] = version
 
 group "haproxy" do
   system true

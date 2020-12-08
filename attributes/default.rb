@@ -26,6 +26,7 @@ default['haproxy']['global']['stats socket']['user'] = nil # uses the HAProxy us
 default['haproxy']['global']['stats socket']['group'] = nil # uses the HAProxy group by default
 default['haproxy']['global']['stats socket']['mode'] = "0640"
 default['haproxy']['global']['stats socket']['level'] = "operator"
+default['haproxy']['global']['stats socket']['expose-fd'] = "listeners"
 default['haproxy']['global']['stats timeout'] = "10s"
 default['haproxy']['global']['stats maxconn'] = "10"
 default['haproxy']['global']['user'] = "haproxy"

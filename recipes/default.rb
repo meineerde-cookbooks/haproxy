@@ -28,14 +28,20 @@ if node['haproxy']['global']['daemon'].nil?
 end
 
 unless node['haproxy']['global']['stats socket'].is_a?(String)
-  node.override['haproxy']['global']['stats socket'] = [].tap do |s|
-    s << node['haproxy']['global']['stats socket']['path']
-    s << "user" << (node['haproxy']['global']['stats socket']['user'] || node['haproxy']['global']['user'])
-    s << "group" << (node['haproxy']['global']['stats socket']['group'] || node['haproxy']['global']['group'])
-    s << "mode" << node['haproxy']['global']['stats socket']['mode']
-    s << "level" << node['haproxy']['global']['stats socket']['level']
-    s
-  end.join(" ")
+  stats_socket = []
+  stats_socket << node['haproxy']['global']['stats socket']['path']
+  stats_socket << 'user' << (node['haproxy']['global']['stats socket']['user'] || node['haproxy']['global']['user'])
+  stats_socket << 'group' << (node['haproxy']['global']['stats socket']['group'] || node['haproxy']['global']['group'])
+
+  node['haproxy']['global']['stats socket'].sort.each do |key, value|
+    next if ['path', 'user', 'group'].include?(key)
+    next if value == false
+
+    stats_socket << key
+    stats_socket << value unless value == true
+  end
+
+  node.override['haproxy']['global']['stats socket'] = stats_socket.join(' ')
 end
 
 node.override['haproxy']['global']['node'] = node['fqdn'] unless node['haproxy']['global']['node']

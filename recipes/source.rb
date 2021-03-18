@@ -142,7 +142,7 @@ if (node['haproxy']['source']['flags'] & %w[USE_ZLIB=1 USE_OPENSSL=1]).any?
 end
 
 if Gem::Version.new(version) >= Gem::Version.new('1.8')
-  # Make sure the -lpthraec option appears last, otherwise we might run into
+  # Make sure the -lpthread option appears last, otherwise we might run into
   # https://github.com/haproxy/haproxy/issues/204
   add_lib << '-lpthread' unless node['haproxy']['source']['flags'].include?('USE_THREAD=')
 end

@@ -35,11 +35,33 @@ default['haproxy']['source']['silent_define_flags'] = []
 #      }
 #    }
 
-# If you enabled OpenSSL support, you can force a custom OpenSSL version to be
-# compiled into HAProxy by setting this version.
-# If this is not set, the default settings of the system are used
+###############################################################################
+# OPENSSL OPTIONS
+###############################################################################
+
+###############################################################################
+# HAPROXY-SPECIFIC OPENSSL
+#
+# You can force a custom OpenSSL version to be compiled from source and used for
+# this HAProxy by setting the OpenSSL version and checksum.
+
 default['haproxy']['source']['openssl_version'] = nil
 # This is the SHA256 checksum of the OpenSSL source tar.gz
 default['haproxy']['source']['openssl_checksum'] = nil
 # Additional flags added to ./config for OpenSSL
 default['haproxy']['source']['openssl_config_flags'] = []
+
+###############################################################################
+# CUSTOM OPENSSL
+#
+# Alternatively, you may use a custom OpenSSL version you may have on your
+# system in a non-default path. By setting the path to the custom compiled
+# OpenSSL version, we will use it
+
+default['haproxy']['source']['openssl_path'] = nil
+
+###############################################################################
+# OPENSSL - SYSTEM
+#
+# Finally, if non of the previous options were set, we will use the
+# system-installed OpenSSL library when you set the USE_OPENSSL=1 flag.

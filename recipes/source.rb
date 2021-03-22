@@ -121,8 +121,51 @@ if node['haproxy']['source']['flags'].include?("USE_OPENSSL=1")
     haproxy_flags << "SSL_INC=#{node['haproxy']['source']['dir']}/openssl/include"
     haproxy_flags << "SSL_LIB=#{node['haproxy']['source']['dir']}/openssl/lib"
 
-    # required on my Debian Wheezy test box
     add_lib << "-lz" << "-ldl"
+  elsif node['haproxy']['source']['openssl_path']
+    haproxy_flags.delete_if {|flag| flag =~ /^\s*(SSL_INC|SSL_LIB)=/ }
+    haproxy_flags << "SSL_INC=#{node['haproxy']['source']['openssl_path']}/include"
+    haproxy_flags << "SSL_LIB=#{node['haproxy']['source']['openssl_path']}/lib"
+    add_lib << "-Wl,-rpath,#{node['haproxy']['source']['openssl_path']}/lib"
+
+    add_lib << "-lz" << "-ldl"
+
+    previous_openssl_path = node['haproxy']['source']['openssl_path_previous']
+    previous_openssl_path_version_checksum = node['haproxy']['source']['openssl_path_version_checksum']
+    previous_openssl_path_libssl_checksum = node['haproxy']['source']['openssl_path_libssl_checksum']
+
+    openssl_bin = "#{node['haproxy']['source']['openssl_path']}/bin/openssl"
+    if File.executable?(openssl_bin)
+      openssl_version = Mixlib::ShellOut.new("#{openssl_bin} version -a").run_command.stdout.strip
+      openssl_path_version_checksum = Chef::Digester.checksum_for_file StringIO.new(openssl_version)
+    end
+
+    libssl = "#{node['haproxy']['source']['openssl_path']}/lib/libssl.a"
+    if File.exist?(libssl)
+      openssl_path_libssl_checksum = Chef::Digester.checksum_for_file(libssl)
+    end
+
+    # Force compilation of HAProxy if the OpenSSL library has changed from the
+    # last run.
+    node.run_state['force_haproxy_compilation'] ||= begin
+      openssl_path_version_checksum.nil? ||
+      openssl_path_libssl_checksum.nil? ||
+      (
+        previous_openssl_path &&
+        previous_openssl_path != node['haproxy']['source']['openssl_path']
+      ) || (
+        previous_openssl_path_version_checksum &&
+        previous_openssl_path_version_checksum != openssl_path_version_checksum
+      ) || (
+        previous_openssl_path_libssl_checksum &&
+        previous_openssl_path_libssl_checksum != openssl_path_libssl_checksum
+      )
+    end
+
+    # Remember OpenSSL checksums for next time
+    node.normal['haproxy']['source']['openssl_path_previous'] = node['haproxy']['source']['openssl_path']
+    node.normal['haproxy']['source']['openssl_path_version_checksum'] = openssl_path_version_checksum
+    node.normal['haproxy']['source']['openssl_path_libssl_checksum'] = openssl_path_libssl_checksum
   else
     package value_for_platform_family(
       %w[debian] => "libssl-dev",
